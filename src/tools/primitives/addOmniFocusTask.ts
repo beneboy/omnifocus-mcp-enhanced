@@ -1,5 +1,5 @@
 import { executeAppleScript, escapeForAppleScript } from '../../utils/scriptExecution.js';
-import { formatDateForAppleScript } from '../../utils/dateFormatter.js';
+import { formatDateForAppleScript, APPLESCRIPT_MAKE_DATE_HANDLER } from '../../utils/dateFormatter.js';
 
 // Interface for task creation parameters
 export interface AddOmniFocusTaskParams {
@@ -95,9 +95,9 @@ function generateAppleScript(params: AddOmniFocusTaskParams): string {
         
         -- Set task properties
         ${note ? `set note of newTask to "${note}"` : ''}
-        ${dueDate ? `set due date of newTask to date "${dueDate}"` : ''}
-        ${deferDate ? `set defer date of newTask to date "${deferDate}"` : ''}
-        ${plannedDate ? `set planned date of newTask to date "${plannedDate}"` : ''}
+        ${dueDate ? `set due date of newTask to ${dueDate}` : ''}
+        ${deferDate ? `set defer date of newTask to ${deferDate}` : ''}
+        ${plannedDate ? `set planned date of newTask to ${plannedDate}` : ''}
         ${flagged ? `set flagged of newTask to true` : ''}
         ${estimatedMinutes ? `set estimated minutes of newTask to ${estimatedMinutes}` : ''}
         
@@ -114,6 +114,7 @@ function generateAppleScript(params: AddOmniFocusTaskParams): string {
   on error errorMessage
     return "{\\\"success\\\":false,\\\"error\\\":\\"" & errorMessage & "\\"}"
   end try
+  ${APPLESCRIPT_MAKE_DATE_HANDLER}
   `;
 
   return script;

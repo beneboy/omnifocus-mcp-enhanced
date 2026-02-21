@@ -1,5 +1,5 @@
 import { executeAppleScript, escapeForAppleScript } from '../../utils/scriptExecution.js';
-import { formatDateForAppleScript } from '../../utils/dateFormatter.js';
+import { formatDateForAppleScript, APPLESCRIPT_MAKE_DATE_HANDLER } from '../../utils/dateFormatter.js';
 
 // Status options for tasks and projects
 type TaskStatus = 'incomplete' | 'completed' | 'dropped';
@@ -121,7 +121,7 @@ function generateAppleScript(params: EditItemParams): string {
       const formattedDueDate = formatDateForAppleScript(params.newDueDate);
       script += `
           -- Update due date
-          set due date of foundItem to date "${formattedDueDate}"
+          set due date of foundItem to ${formattedDueDate}
           set end of changedProperties to "due date"
 `;
     }
@@ -138,7 +138,7 @@ function generateAppleScript(params: EditItemParams): string {
       const formattedDeferDate = formatDateForAppleScript(params.newDeferDate);
       script += `
           -- Update defer date
-          set defer date of foundItem to date "${formattedDeferDate}"
+          set defer date of foundItem to ${formattedDeferDate}
           set end of changedProperties to "defer date"
 `;
     }
@@ -155,7 +155,7 @@ function generateAppleScript(params: EditItemParams): string {
       const formattedPlannedDate = formatDateForAppleScript(params.newPlannedDate);
       script += `
           -- Update planned date
-          set planned date of foundItem to date "${formattedPlannedDate}"
+          set planned date of foundItem to ${formattedPlannedDate}
           set end of changedProperties to "planned date"
 `;
     }
@@ -335,6 +335,7 @@ function generateAppleScript(params: EditItemParams): string {
   on error errorMessage
     return "{\\\"success\\\":false,\\\"error\\\":\\"" & errorMessage & "\\"}"
   end try
+  ${APPLESCRIPT_MAKE_DATE_HANDLER}
   `;
 
   return script;

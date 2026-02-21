@@ -1,5 +1,5 @@
 import { executeAppleScript, escapeForAppleScript } from '../../utils/scriptExecution.js';
-import { formatDateForAppleScript } from '../../utils/dateFormatter.js';
+import { formatDateForAppleScript, APPLESCRIPT_MAKE_DATE_HANDLER } from '../../utils/dateFormatter.js';
 
 // Interface for project creation parameters
 export interface AddProjectParams {
@@ -71,9 +71,9 @@ function generateAppleScript(params: AddProjectParams): string {
         
         -- Set project properties
         ${note ? `set note of newProject to "${note}"` : ''}
-        ${dueDate ? `set due date of newProject to date "${dueDate}"` : ''}
-        ${deferDate ? `set defer date of newProject to date "${deferDate}"` : ''}
-        ${plannedDate ? `set planned date of newProject to date "${plannedDate}"` : ''}
+        ${dueDate ? `set due date of newProject to ${dueDate}` : ''}
+        ${deferDate ? `set defer date of newProject to ${deferDate}` : ''}
+        ${plannedDate ? `set planned date of newProject to ${plannedDate}` : ''}
         ${flagged ? `set flagged of newProject to true` : ''}
         ${estimatedMinutes ? `set estimated minutes of newProject to ${estimatedMinutes}` : ''}
         ${`set sequential of newProject to ${sequential}`}
@@ -91,6 +91,7 @@ function generateAppleScript(params: AddProjectParams): string {
   on error errorMessage
     return "{\\\"success\\\":false,\\\"error\\\":\\"" & errorMessage & "\\"}"
   end try
+  ${APPLESCRIPT_MAKE_DATE_HANDLER}
   `;
 
   return script;
