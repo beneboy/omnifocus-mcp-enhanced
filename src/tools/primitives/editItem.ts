@@ -187,8 +187,8 @@ function generateAppleScript(params: EditItemParams): string {
     if (params.newStatus !== undefined) {
       if (params.newStatus === 'completed') {
         script += `
-          -- Mark task as completed
-          set completed of foundItem to true
+          -- Mark task as completed (works for both inbox and regular tasks)
+          mark complete foundItem
           set end of changedProperties to "status (completed)"
 `;
       } else if (params.newStatus === 'dropped') {
@@ -199,9 +199,8 @@ function generateAppleScript(params: EditItemParams): string {
 `;
       } else if (params.newStatus === 'incomplete') {
         script += `
-          -- Mark task as incomplete
-          set completed of foundItem to false
-          set dropped of foundItem to false
+          -- Mark task as incomplete (works for both inbox and regular tasks)
+          mark incomplete foundItem
           set end of changedProperties to "status (incomplete)"
 `;
       }
