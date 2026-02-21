@@ -1,4 +1,4 @@
-import { executeAppleScript } from '../../utils/scriptExecution.js';
+import { executeAppleScript, escapeForAppleScript } from '../../utils/scriptExecution.js';
 
 export interface AddFolderParams {
   name: string;
@@ -7,9 +7,9 @@ export interface AddFolderParams {
 }
 
 function generateAppleScript(params: AddFolderParams): string {
-  const name = params.name.replace(/['"\\]/g, '\\$&');
-  const note = params.note?.replace(/['"\\]/g, '\\$&') || '';
-  const parentFolderName = params.parentFolderName?.replace(/['"\\]/g, '\\$&') || '';
+  const name = escapeForAppleScript(params.name);
+  const note = params.note ? escapeForAppleScript(params.note) : '';
+  const parentFolderName = params.parentFolderName ? escapeForAppleScript(params.parentFolderName) : '';
 
   const script = `
   try

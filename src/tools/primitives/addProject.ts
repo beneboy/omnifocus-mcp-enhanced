@@ -1,4 +1,4 @@
-import { executeAppleScript } from '../../utils/scriptExecution.js';
+import { executeAppleScript, escapeForAppleScript } from '../../utils/scriptExecution.js';
 import { formatDateForAppleScript } from '../../utils/dateFormatter.js';
 
 // Interface for project creation parameters
@@ -20,8 +20,8 @@ export interface AddProjectParams {
  */
 function generateAppleScript(params: AddProjectParams): string {
   // Sanitize and prepare parameters for AppleScript
-  const name = params.name.replace(/['"\\]/g, '\\$&'); // Escape quotes and backslashes
-  const note = params.note?.replace(/['"\\]/g, '\\$&') || '';
+  const name = escapeForAppleScript(params.name);
+  const note = params.note ? escapeForAppleScript(params.note) : '';
   // Convert ISO dates to AppleScript format
   const dueDate = params.dueDate ? formatDateForAppleScript(params.dueDate) : '';
   const deferDate = params.deferDate ? formatDateForAppleScript(params.deferDate) : '';
@@ -29,11 +29,11 @@ function generateAppleScript(params: AddProjectParams): string {
   const flagged = params.flagged === true;
   const estimatedMinutes = params.estimatedMinutes?.toString() || '';
   const tags = params.tags || [];
-  const folderName = params.folderName?.replace(/['"\\]/g, '\\$&') || '';
+  const folderName = params.folderName ? escapeForAppleScript(params.folderName) : '';
   const sequential = params.sequential === true;
   const tagAssignmentScript = tags.length > 0
     ? tags.map(tag => {
-      const sanitizedTag = tag.replace(/['"\\]/g, '\\$&');
+      const sanitizedTag = escapeForAppleScript(tag);
       return `
           try
             set theTag to missing value

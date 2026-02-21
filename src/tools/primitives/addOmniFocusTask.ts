@@ -1,4 +1,4 @@
-import { executeAppleScript } from '../../utils/scriptExecution.js';
+import { executeAppleScript, escapeForAppleScript } from '../../utils/scriptExecution.js';
 import { formatDateForAppleScript } from '../../utils/dateFormatter.js';
 
 // Interface for task creation parameters
@@ -22,7 +22,7 @@ export function buildTagAssignmentScript(tags: string[], targetVar: string): str
   }
 
   return tags.map(tag => {
-    const sanitizedTag = tag.replace(/['"\\]/g, '\\$&');
+    const sanitizedTag = escapeForAppleScript(tag);
     return `
           try
             set theTag to missing value
@@ -44,8 +44,8 @@ export function buildTagAssignmentScript(tags: string[], targetVar: string): str
  */
 function generateAppleScript(params: AddOmniFocusTaskParams): string {
   // Sanitize and prepare parameters for AppleScript
-  const name = params.name.replace(/['"\\]/g, '\\$&'); // Escape quotes and backslashes
-  const note = params.note?.replace(/['"\\]/g, '\\$&') || '';
+  const name = escapeForAppleScript(params.name);
+  const note = params.note ? escapeForAppleScript(params.note) : '';
   // Convert ISO dates to AppleScript format
   const dueDate = params.dueDate ? formatDateForAppleScript(params.dueDate) : '';
   const deferDate = params.deferDate ? formatDateForAppleScript(params.deferDate) : '';
@@ -53,9 +53,9 @@ function generateAppleScript(params: AddOmniFocusTaskParams): string {
   const flagged = params.flagged === true;
   const estimatedMinutes = params.estimatedMinutes?.toString() || '';
   const tags = params.tags || [];
-  const projectName = params.projectName?.replace(/['"\\]/g, '\\$&') || '';
-  const parentTaskId = params.parentTaskId?.replace(/['"\\]/g, '\\$&') || '';
-  const parentTaskName = params.parentTaskName?.replace(/['"\\]/g, '\\$&') || '';
+  const projectName = params.projectName ? escapeForAppleScript(params.projectName) : '';
+  const parentTaskId = params.parentTaskId ? escapeForAppleScript(params.parentTaskId) : '';
+  const parentTaskName = params.parentTaskName ? escapeForAppleScript(params.parentTaskName) : '';
   const tagAssignmentScript = buildTagAssignmentScript(tags, 'newTask');
 
   // Construct AppleScript with error handling

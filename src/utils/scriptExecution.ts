@@ -1,3 +1,11 @@
+/**
+ * Escape a string for safe use inside AppleScript double-quoted strings.
+ * Handles double quotes and backslashes (the only characters needing escaping).
+ */
+export function escapeForAppleScript(str: string): string {
+  return str.replace(/["\\]/g, '\\$&');
+}
+
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { writeFileSync, unlinkSync, readFileSync } from 'fs';
