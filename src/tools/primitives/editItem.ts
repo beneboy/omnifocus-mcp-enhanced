@@ -1,4 +1,5 @@
 import { executeAppleScript, escapeForAppleScript } from '../../utils/scriptExecution.js';
+import { buildRepetitionScript } from './addOmniFocusTask.js';
 import { formatDateForAppleScript, APPLESCRIPT_MAKE_DATE_HANDLER } from '../../utils/dateFormatter.js';
 
 // Status options for tasks and projects
@@ -25,6 +26,9 @@ export interface EditItemParams {
   addTags?: string[];           // Tags to add to the task
   removeTags?: string[];        // Tags to remove from the task
   replaceTags?: string[];       // Tags to replace all existing tags with
+  repeatInterval?: number;      // Repeat every N units
+  repeatUnit?: 'day' | 'week' | 'month' | 'year';
+  repeatFrom?: 'due' | 'completion'; // Fixed schedule vs defer from completion
 
   // Project-specific fields
   newSequential?: boolean;      // Whether the project should be sequential
@@ -265,6 +269,14 @@ function generateAppleScript(params: EditItemParams): string {
           set end of changedProperties to "tags (removed)"
 `;
       }
+    }
+
+    // Set repetition
+    if (params.repeatInterval && params.repeatUnit) {
+      const repScript = buildRepetitionScript('foundItem', params.repeatInterval, params.repeatUnit, params.repeatFrom);
+      script += `${repScript}
+          set end of changedProperties to "repetition"
+`;
     }
   }
 

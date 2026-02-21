@@ -21,6 +21,9 @@ export const schema = z.object({
   addTags: z.array(z.string()).optional().describe("Tags to add to the task"),
   removeTags: z.array(z.string()).optional().describe("Tags to remove from the task"),
   replaceTags: z.array(z.string()).optional().describe("Tags to replace all existing tags with"),
+  repeatInterval: z.number().optional().describe("Repeat every N units (requires repeatUnit)"),
+  repeatUnit: z.enum(['day', 'week', 'month', 'year']).optional().describe("Unit for repeat interval"),
+  repeatFrom: z.enum(['due', 'completion']).optional().describe("'due' = fixed schedule, 'completion' = defer from completion date (default: 'due')"),
 
   // Project-specific fields
   newSequential: z.boolean().optional().describe("Whether the project should be sequential"),

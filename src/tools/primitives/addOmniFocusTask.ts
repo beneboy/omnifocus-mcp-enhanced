@@ -14,6 +14,31 @@ export interface AddOmniFocusTaskParams {
   projectName?: string; // Project name to add task to
   parentTaskId?: string; // Parent task ID for subtask creation
   parentTaskName?: string; // Parent task name for subtask creation (alternative to ID)
+  repeatInterval?: number; // Repeat every N units
+  repeatUnit?: 'day' | 'week' | 'month' | 'year';
+  repeatFrom?: 'due' | 'completion'; // Fixed schedule vs defer from completion
+}
+
+const FREQ_MAP: Record<string, string> = {
+  day: 'DAILY',
+  week: 'WEEKLY',
+  month: 'MONTHLY',
+  year: 'YEARLY'
+};
+
+export function buildRepetitionScript(
+  targetVar: string,
+  interval?: number,
+  unit?: string,
+  from?: string
+): string {
+  if (!interval || !unit) return '';
+  const freq = FREQ_MAP[unit];
+  if (!freq) return '';
+  const rrule = `FREQ=${freq};INTERVAL=${interval}`;
+  const method = from === 'completion' ? 'due after completion' : 'fixed repetition';
+  return `
+          set repetition rule of ${targetVar} to {recurrence:"${rrule}", repetition method:${method}}`;
 }
 
 export function buildTagAssignmentScript(tags: string[], targetVar: string): string {
@@ -57,6 +82,7 @@ function generateAppleScript(params: AddOmniFocusTaskParams): string {
   const parentTaskId = params.parentTaskId ? escapeForAppleScript(params.parentTaskId) : '';
   const parentTaskName = params.parentTaskName ? escapeForAppleScript(params.parentTaskName) : '';
   const tagAssignmentScript = buildTagAssignmentScript(tags, 'newTask');
+  const repetitionScript = buildRepetitionScript('newTask', params.repeatInterval, params.repeatUnit, params.repeatFrom);
 
   // Construct AppleScript with error handling
   let script = `
@@ -101,9 +127,12 @@ function generateAppleScript(params: AddOmniFocusTaskParams): string {
         ${flagged ? `set flagged of newTask to true` : ''}
         ${estimatedMinutes ? `set estimated minutes of newTask to ${estimatedMinutes}` : ''}
         
+        -- Set repetition if provided
+        ${repetitionScript}
+
         -- Get the task ID
         set taskId to id of newTask as string
-        
+
         -- Add tags if provided
         ${tagAssignmentScript}
         
