@@ -24,6 +24,7 @@ export const schema = z.object({
   repeatInterval: z.number().optional().describe("Repeat every N units (requires repeatUnit)"),
   repeatUnit: z.enum(['day', 'week', 'month', 'year']).optional().describe("Unit for repeat interval"),
   repeatFrom: z.enum(['due', 'completion']).optional().describe("'due' = fixed schedule, 'completion' = defer from completion date (default: 'due')"),
+  newProjectName: z.string().optional().describe("Move task to a different project by name"),
 
   // Project-specific fields
   newSequential: z.boolean().optional().describe("Whether the project should be sequential"),

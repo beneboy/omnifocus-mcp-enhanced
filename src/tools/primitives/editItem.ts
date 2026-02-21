@@ -29,6 +29,7 @@ export interface EditItemParams {
   repeatInterval?: number;      // Repeat every N units
   repeatUnit?: 'day' | 'week' | 'month' | 'year';
   repeatFrom?: 'due' | 'completion'; // Fixed schedule vs defer from completion
+  newProjectName?: string;      // Move task to a different project
 
   // Project-specific fields
   newSequential?: boolean;      // Whether the project should be sequential
@@ -275,6 +276,23 @@ function generateAppleScript(params: EditItemParams): string {
       const repScript = buildRepetitionScript('foundItem', params.repeatInterval, params.repeatUnit, params.repeatFrom);
       script += `${repScript}
           set end of changedProperties to "repetition"
+`;
+    }
+
+    // Move task to a different project
+    if (params.newProjectName !== undefined) {
+      const projectName = escapeForAppleScript(params.newProjectName);
+      script += `
+          -- Move task to a different project
+          set destProject to missing value
+          try
+            set destProject to first flattened project where name = "${projectName}"
+          end try
+          if destProject is missing value then
+            return "{\\\"success\\\":false,\\\"error\\\":\\\"Project not found: ${projectName}\\\"}"
+          end if
+          move foundItem to end of tasks of destProject
+          set end of changedProperties to "project"
 `;
     }
   }
