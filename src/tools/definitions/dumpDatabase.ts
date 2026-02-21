@@ -65,9 +65,6 @@ Status: #next #avail #block #due #over #compl #drop\n\n`;
     folderMap.set(folder.id, folder);
   });
   
-  // Get all tag names to compute minimum unique prefixes
-  const allTagNames = Object.values(database.tags).map((tag: any) => tag.name);
-  const tagPrefixMap = computeMinimumUniquePrefixes(allTagNames);
   
   // Function to get folder hierarchy path 
   function getFolderPath(folderId: string): string[] {
@@ -206,12 +203,7 @@ Status: #next #avail #block #due #over #compl #drop\n\n`;
     // Format tags
     let tagsStr = '';
     if (task.tagNames && task.tagNames.length > 0) {
-      // Use minimum unique prefixes for tag names
-      const abbreviatedTags = task.tagNames.map((tag: string) => {
-        return tagPrefixMap.get(tag) || tag;
-      });
-      
-      tagsStr = ` <${abbreviatedTags.join(',')}>`;
+      tagsStr = ` <${task.tagNames.join(',')}>`;
     }
     
     // Format status
@@ -283,41 +275,3 @@ Status: #next #avail #block #due #over #compl #drop\n\n`;
   return output;
 }
 
-// Compute minimum unique prefixes for all tags (minimum 3 characters)
-function computeMinimumUniquePrefixes(tagNames: string[]): Map<string, string> {
-  const prefixMap = new Map<string, string>();
-  
-  // For each tag name
-  for (const tagName of tagNames) {
-    // Start with minimum length of 3
-    let prefixLength = 3;
-    let isUnique = false;
-    
-    // Keep increasing prefix length until we find a unique prefix
-    while (!isUnique && prefixLength <= tagName.length) {
-      const prefix = tagName.substring(0, prefixLength);
-      
-      // Check if this prefix uniquely identifies the tag
-      isUnique = tagNames.every(otherTag => {
-        // If it's the same tag, skip comparison
-        if (otherTag === tagName) return true;
-        
-        // If the other tag starts with the same prefix, it's not unique
-        return !otherTag.startsWith(prefix);
-      });
-      
-      if (isUnique) {
-        prefixMap.set(tagName, prefix);
-      } else {
-        prefixLength++;
-      }
-    }
-    
-    // If we couldn't find a unique prefix, use the full tag name
-    if (!isUnique) {
-      prefixMap.set(tagName, tagName);
-    }
-  }
-  
-  return prefixMap;
-} 
