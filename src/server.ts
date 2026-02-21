@@ -62,7 +62,7 @@ server.tool(
 
 server.tool(
   "remove_item",
-  "Remove a task or project from OmniFocus",
+  "Remove a task, project, or folder from OmniFocus",
   removeItemTool.schema.shape,
   removeItemTool.handler
 );

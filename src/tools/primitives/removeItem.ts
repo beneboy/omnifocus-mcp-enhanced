@@ -4,7 +4,7 @@ import { executeAppleScript } from '../../utils/scriptExecution.js';
 export interface RemoveItemParams {
   id?: string;          // ID of the task or project to remove
   name?: string;        // Name of the task or project to remove (as fallback if ID not provided)
-  itemType: 'task' | 'project'; // Type of item to remove
+  itemType: 'task' | 'project' | 'folder'; // Type of item to remove
 }
 
 /**
@@ -35,7 +35,7 @@ function generateAppleScript(params: RemoveItemParams): string {
     script += `
         -- Try to find by ID first
         try
-          set foundItem to first ${itemType === 'task' ? 'flattened task' : 'flattened project'} where id = "${id}"
+          set foundItem to first ${itemType === 'task' ? 'flattened task' : itemType === 'folder' ? 'flattened folder' : 'flattened project'} where id = "${id}"
         end try
 `;
   }
@@ -45,7 +45,7 @@ function generateAppleScript(params: RemoveItemParams): string {
     script += `
         -- Find by name
         try
-          set foundItem to first ${itemType === 'task' ? 'flattened task' : 'flattened project'} where name = "${name}"
+          set foundItem to first ${itemType === 'task' ? 'flattened task' : itemType === 'folder' ? 'flattened folder' : 'flattened project'} where name = "${name}"
         end try
 `;
   } else if (id && name) {
@@ -53,7 +53,7 @@ function generateAppleScript(params: RemoveItemParams): string {
         -- If ID search failed, try to find by name as fallback
         if foundItem is missing value then
           try
-            set foundItem to first ${itemType === 'task' ? 'flattened task' : 'flattened project'} where name = "${name}"
+            set foundItem to first ${itemType === 'task' ? 'flattened task' : itemType === 'folder' ? 'flattened folder' : 'flattened project'} where name = "${name}"
           end try
         end if
 `;

@@ -5,7 +5,7 @@ import { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.j
 export const schema = z.object({
   id: z.string().optional().describe("The ID of the task or project to remove"),
   name: z.string().optional().describe("The name of the task or project to remove (as fallback if ID not provided)"),
-  itemType: z.enum(['task', 'project']).describe("Type of item to remove ('task' or 'project')")
+  itemType: z.enum(['task', 'project', 'folder']).describe("Type of item to remove ('task', 'project', or 'folder')")
 });
 
 export async function handler(args: z.infer<typeof schema>, extra: RequestHandlerExtra) {
@@ -22,11 +22,11 @@ export async function handler(args: z.infer<typeof schema>, extra: RequestHandle
     }
     
     // Validate itemType
-    if (!['task', 'project'].includes(args.itemType)) {
+    if (!['task', 'project', 'folder'].includes(args.itemType)) {
       return {
         content: [{
           type: "text" as const,
-          text: `Invalid item type: ${args.itemType}. Must be either 'task' or 'project'.`
+          text: `Invalid item type: ${args.itemType}. Must be 'task', 'project', or 'folder'.`
         }],
         isError: true
       };
@@ -40,7 +40,7 @@ export async function handler(args: z.infer<typeof schema>, extra: RequestHandle
     
     if (result.success) {
       // Item was removed successfully
-      const itemTypeLabel = args.itemType === 'task' ? 'Task' : 'Project';
+      const itemTypeLabel = args.itemType === 'task' ? 'Task' : args.itemType === 'folder' ? 'Folder' : 'Project';
       
       return {
         content: [{
