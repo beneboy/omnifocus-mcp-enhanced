@@ -32,21 +32,21 @@ export async function handler(args: z.infer<typeof schema>, extra: RequestHandle
       const successCount = result.results.filter(r => r.success).length;
       const failureCount = result.results.filter(r => !r.success).length;
       
-      let message = `✅ Successfully removed ${successCount} items.`;
-      
+      let message = `Successfully removed ${successCount} items.`;
+
       if (failureCount > 0) {
-        message += ` ⚠️ Failed to remove ${failureCount} items.`;
+        message += ` Failed to remove ${failureCount} items.`;
       }
-      
+
       // Include details about removed items
       const details = result.results.map((item, index) => {
         if (item.success) {
           const itemType = args.items[index].itemType;
-          return `- ✅ ${itemType}: "${item.name}"`;
+          return `- [ok] ${itemType}: "${item.name}"`;
         } else {
           const itemType = args.items[index].itemType;
           const identifier = args.items[index].id || args.items[index].name;
-          return `- ❌ ${itemType}: ${identifier} - Error: ${item.error}`;
+          return `- [error] ${itemType}: ${identifier} - Error: ${item.error}`;
         }
       }).join('\n');
       

@@ -45,7 +45,7 @@ export async function handler(args: z.infer<typeof schema>, extra: RequestHandle
       return {
         content: [{
           type: "text" as const,
-          text: `✅ ${itemTypeLabel} "${result.name}" removed successfully.`
+          text: `${itemTypeLabel} "${result.name}" removed successfully.`
         }]
       };
     } else {

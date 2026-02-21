@@ -27,7 +27,7 @@ export async function handler(args: z.infer<typeof schema>, extra: RequestHandle
       const task = result.task;
 
       // Format task information for display
-      let infoText = `📋 **Task Information**\n`;
+      let infoText = `**Task Information**\n`;
       infoText += `• **Name**: ${task.name}\n`;
       infoText += `• **ID**: ${task.id}\n`;
 

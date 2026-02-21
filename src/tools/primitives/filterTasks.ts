@@ -1,22 +1,22 @@
 import { executeOmniFocusScript } from '../../utils/scriptExecution.js';
 
 export interface FilterTasksOptions {
-  // 🎯 任务状态过滤
+  // Task status filter
   taskStatus?: string[];
 
-  // 📍 透视范围
+  // Perspective scope
   perspective?: 'inbox' | 'flagged' | 'all' | 'custom';
 
-  // 💫 自定义透视参数
+  // Custom perspective params
   customPerspectiveName?: string;
   customPerspectiveId?: string;
 
-  // 📁 项目/标签过滤
+  // Project/tag filter
   projectFilter?: string;
   tagFilter?: string | string[];
   exactTagMatch?: boolean;
 
-  // 📅 截止日期过滤
+  // Due date filter
   dueBefore?: string;
   dueAfter?: string;
   dueToday?: boolean;
@@ -24,21 +24,21 @@ export interface FilterTasksOptions {
   dueThisMonth?: boolean;
   overdue?: boolean;
 
-  // 🚀 推迟日期过滤
+  // Defer date filter
   deferBefore?: string;
   deferAfter?: string;
   deferToday?: boolean;
   deferThisWeek?: boolean;
   deferAvailable?: boolean;
 
-  // 🗓 计划日期过滤
+  // Planned date filter
   plannedBefore?: string;
   plannedAfter?: string;
   plannedToday?: boolean;
   plannedThisWeek?: boolean;
   plannedThisMonth?: boolean;
 
-  // ✅ 完成日期过滤
+  // Completion date filter
   completedBefore?: string;
   completedAfter?: string;
   completedToday?: boolean;
@@ -46,7 +46,7 @@ export interface FilterTasksOptions {
   completedThisWeek?: boolean;
   completedThisMonth?: boolean;
 
-  // 🚩 其他维度
+  // Other dimensions
   flagged?: boolean;
   searchText?: string;
   hasEstimate?: boolean;
@@ -55,7 +55,7 @@ export interface FilterTasksOptions {
   hasNote?: boolean;
   inInbox?: boolean;
 
-  // 📊 输出控制
+  // Output control
   limit?: number;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
@@ -292,7 +292,7 @@ export function applyClientSideFilters(tasks: any[], options: FilterTasksOptions
 
 export async function filterTasks(options: FilterTasksOptions = {}): Promise<string> {
   try {
-    // 设置默认值
+    // Set defaults
     const {
       perspective = 'all',
       exactTagMatch = false,
@@ -305,7 +305,7 @@ export async function filterTasks(options: FilterTasksOptions = {}): Promise<str
     const needsClientSideSorting = !['name', 'completedDate'].includes(sortBy);
     const sourceLimit = (needsClientSideFiltering || needsClientSideSorting) ? Math.max(limit * 20, 1000) : limit;
 
-    // 执行常规过滤脚本
+    // Execute filter script
     const result = await executeOmniFocusScript('@filterTasks.js', {
       ...options,
       perspective,
@@ -319,7 +319,7 @@ export async function filterTasks(options: FilterTasksOptions = {}): Promise<str
       return result;
     }
 
-    // 如果结果是对象，格式化它
+    // If result is an object, format it
     if (result && typeof result === 'object') {
       const data = result as any;
 
@@ -327,10 +327,10 @@ export async function filterTasks(options: FilterTasksOptions = {}): Promise<str
         throw new Error(data.error);
       }
 
-      // 格式化过滤结果
-      let output = `# 🔍 FILTERED TASKS\n\n`;
+      // Format filtered results
+      let output = `# FILTERED TASKS\n\n`;
 
-      // 显示过滤条件摘要
+      // Show filter criteria summary
       const filterSummary = buildFilterSummary(options);
       if (filterSummary) {
         output += `**Filter**: ${filterSummary}\n\n`;
@@ -344,9 +344,8 @@ export async function filterTasks(options: FilterTasksOptions = {}): Promise<str
         const totalCount = sortedTasks.length;
 
         if (taskCount === 0) {
-          output += '🎯 No tasks match your filter criteria.\n';
+          output += 'No tasks match your filter criteria.\n';
 
-          // 提供一些建议
           output += '\n**Tips**:\n';
           output += '- Try broadening your search criteria\n';
           output += '- Check if tasks exist in the specified project/tags\n';
@@ -358,12 +357,12 @@ export async function filterTasks(options: FilterTasksOptions = {}): Promise<str
           }
           output += ':\n\n';
 
-          // 按项目分组显示任务
+          // Group tasks by project
           const tasksByProject = groupTasksByProject(limitedTasks);
 
           tasksByProject.forEach((tasks, projectName) => {
             if (tasksByProject.size > 1) {
-              output += `## 📁 ${projectName}\n`;
+              output += `## ${projectName}\n`;
             }
 
             tasks.forEach((task: any) => {
@@ -376,8 +375,8 @@ export async function filterTasks(options: FilterTasksOptions = {}): Promise<str
             }
           });
 
-          // 显示排序信息
-          output += `\n📊 **Sorted by**: ${sortBy} (${sortOrder})\n`;
+          // Sort info
+          output += `\n**Sorted by**: ${sortBy} (${sortOrder})\n`;
         }
       } else {
         output += 'No task data available\n';
@@ -393,7 +392,7 @@ export async function filterTasks(options: FilterTasksOptions = {}): Promise<str
   }
 }
 
-// 构建过滤条件摘要
+// Build filter criteria summary
 function buildFilterSummary(options: FilterTasksOptions): string {
   const conditions: string[] = [];
 
@@ -443,9 +442,9 @@ function buildFilterSummary(options: FilterTasksOptions): string {
     if (options.estimateMin !== undefined && options.estimateMax !== undefined) {
       estimate += `${options.estimateMin}-${options.estimateMax}min`;
     } else if (options.estimateMin !== undefined) {
-      estimate += `≥${options.estimateMin}min`;
+      estimate += `>=${options.estimateMin}min`;
     } else {
-      estimate += `≤${options.estimateMax}min`;
+      estimate += `<=${options.estimateMax}min`;
     }
     conditions.push(estimate);
   }
@@ -457,12 +456,12 @@ function buildFilterSummary(options: FilterTasksOptions): string {
   return conditions.length > 0 ? conditions.join(' | ') : '';
 }
 
-// 按项目分组任务
+// Group tasks by project
 function groupTasksByProject(tasks: any[]): Map<string, any[]> {
   const grouped = new Map<string, any[]>();
 
   tasks.forEach(task => {
-    const projectName = task.projectName || (task.inInbox ? '📥 Inbox' : '📂 No Project');
+    const projectName = task.projectName || (task.inInbox ? 'Inbox' : 'No Project');
 
     if (!grouped.has(projectName)) {
       grouped.set(projectName, []);
@@ -473,44 +472,42 @@ function groupTasksByProject(tasks: any[]): Map<string, any[]> {
   return grouped;
 }
 
-// 格式化单个任务
+// Format a single task
 function formatTask(task: any): string {
   let output = '';
 
-  // 任务基本信息
-  const flagSymbol = task.flagged ? '🚩 ' : '';
-  const statusEmoji = getStatusEmoji(task.taskStatus);
+  const flagIndicator = task.flagged ? '[flagged] ' : '';
 
-  output += `${statusEmoji} ${flagSymbol}${task.name}`;
+  output += `- ${flagIndicator}${task.name}`;
 
-  // 日期信息
+  // Date info
   const dateInfo: string[] = [];
   if (task.dueDate) {
     const dueDateStr = new Date(task.dueDate).toLocaleDateString();
     const isOverdue = new Date(task.dueDate) < new Date();
-    dateInfo.push(isOverdue ? `⚠️ DUE: ${dueDateStr}` : `📅 DUE: ${dueDateStr}`);
+    dateInfo.push(isOverdue ? `OVERDUE: ${dueDateStr}` : `DUE: ${dueDateStr}`);
   }
 
   if (task.deferDate) {
     const deferDateStr = new Date(task.deferDate).toLocaleDateString();
-    dateInfo.push(`🚀 DEFER: ${deferDateStr}`);
+    dateInfo.push(`DEFER: ${deferDateStr}`);
   }
 
   if (task.plannedDate) {
     const plannedDateStr = new Date(task.plannedDate).toLocaleDateString();
-    dateInfo.push(`🗓 PLAN: ${plannedDateStr}`);
+    dateInfo.push(`PLAN: ${plannedDateStr}`);
   }
 
   if (task.completedDate) {
     const completedDateStr = new Date(task.completedDate).toLocaleDateString();
-    dateInfo.push(`✅ DONE: ${completedDateStr}`);
+    dateInfo.push(`DONE: ${completedDateStr}`);
   }
 
   if (dateInfo.length > 0) {
     output += ` [${dateInfo.join(', ')}]`;
   }
 
-  // 其他信息
+  // Additional info
   const additionalInfo: string[] = [];
 
   if (task.taskStatus && task.taskStatus !== 'Available') {
@@ -521,9 +518,9 @@ function formatTask(task: any): string {
     const hours = Math.floor(task.estimatedMinutes / 60);
     const minutes = task.estimatedMinutes % 60;
     if (hours > 0) {
-      additionalInfo.push(`⏱ ${hours}h${minutes > 0 ? `${minutes}m` : ''}`);
+      additionalInfo.push(`${hours}h${minutes > 0 ? `${minutes}m` : ''}`);
     } else {
-      additionalInfo.push(`⏱ ${minutes}m`);
+      additionalInfo.push(`${minutes}m`);
     }
   }
 
@@ -533,31 +530,16 @@ function formatTask(task: any): string {
 
   output += '\n';
 
-  // 任务备注
+  // Task note
   if (task.note && task.note.trim()) {
-    output += `  📝 ${task.note.trim()}\n`;
+    output += `  Note: ${task.note.trim()}\n`;
   }
 
-  // 标签
+  // Tags
   if (task.tags && task.tags.length > 0) {
     const tagNames = task.tags.map((tag: any) => tag.name).join(', ');
-    output += `  🏷 ${tagNames}\n`;
+    output += `  Tags: ${tagNames}\n`;
   }
 
   return output;
-}
-
-// 获取状态对应的emoji
-function getStatusEmoji(status: string): string {
-  const statusMap: { [key: string]: string } = {
-    Available: '⚪',
-    Next: '🔵',
-    Blocked: '🔴',
-    DueSoon: '🟡',
-    Overdue: '🔴',
-    Completed: '✅',
-    Dropped: '⚫'
-  };
-
-  return statusMap[status] || '⚪';
 }

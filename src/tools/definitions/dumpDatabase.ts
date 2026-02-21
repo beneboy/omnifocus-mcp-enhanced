@@ -55,7 +55,7 @@ export function formatCompactReport(database: any, options: { hideCompleted: boo
   
   // Add legend
   output += `FORMAT LEGEND:
-F: Folder | P: Project | •: Task | 🚩: Flagged
+F: Folder | P: Project | •: Task | [flagged]: Flagged
 Dates: [M/D] | [DUE:M/D] [PLAN:M/D] [defer:M/D] | Duration: (30m) or (2h) | Tags: <tag1,tag2>
 Status: #next #avail #block #due #over #compl #drop\n\n`;
   
@@ -146,7 +146,7 @@ Status: #next #avail #block #due #over #compl #drop\n\n`;
     }
     
     // Add flag if present
-    const flaggedSymbol = project.flagged ? ' 🚩' : '';
+    const flaggedSymbol = project.flagged ? ' [flagged]' : '';
     
     let projectOutput = `${indent}P: ${project.name}${flaggedSymbol}${statusInfo}\n`;
     
@@ -174,7 +174,7 @@ Status: #next #avail #block #due #over #compl #drop\n\n`;
     }
     
     // Flag symbol
-    const flagSymbol = task.flagged ? '🚩 ' : '';
+    const flagSymbol = task.flagged ? '[flagged] ' : '';
     
     // Format dates
     let dateInfo = '';

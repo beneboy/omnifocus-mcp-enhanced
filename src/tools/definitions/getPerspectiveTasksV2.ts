@@ -1,22 +1,18 @@
 import { z } from 'zod';
 import { getPerspectiveTasksV2 } from '../primitives/getPerspectiveTasksV2.js';
 
-// 基于 OmniFocus 4.2+ 新 API 的真正透视访问工具
-// 与原有 get_custom_perspective 工具的区别：
-// - 使用新的 archivedFilterRules API，获得 100% 准确的透视筛选结果
-// - 支持所有 27 种筛选规则类型
-// - 自动处理聚合逻辑（all/any/none）
-// - 无需手动配置筛选条件
+// Perspective access using OmniFocus 4.2+ archivedFilterRules API
+// Supports all 27 filter rule types and 3 aggregation modes.
 
 export const schema = z.object({
-  perspectiveName: z.string().describe("透视名称。使用你在 OmniFocus 中创建的自定义透视名称，如 '今日工作安排'、'今日复盘' 等"),
-  
-  hideCompleted: z.boolean().optional().default(true).describe("是否隐藏已完成和已放弃的任务（默认: true）"),
-  
-  limit: z.number().optional().default(100).describe("返回任务的最大数量（默认: 100，设为 0 表示无限制）"),
+  perspectiveName: z.string().describe("Name of the OmniFocus custom perspective"),
+
+  hideCompleted: z.boolean().optional().default(true).describe("Hide completed and dropped tasks (default: true)"),
+
+  limit: z.number().optional().default(100).describe("Maximum number of tasks to return (default: 100, 0 for unlimited)"),
 
   displayMode: z.enum(['project_tree', 'task_tree', 'flat']).optional().default('project_tree')
-    .describe("展示模式：project_tree（按项目+子任务树），task_tree（全局任务树），flat（平铺列表）")
+    .describe("Display mode: project_tree (by project + subtask tree), task_tree (global task tree), flat (simple list)")
 });
 
 export type GetPerspectiveTasksV2Params = z.infer<typeof schema>;
@@ -24,7 +20,7 @@ export type GetPerspectiveTasksV2Params = z.infer<typeof schema>;
 export async function handler(params: GetPerspectiveTasksV2Params) {
   try {
     const result = await getPerspectiveTasksV2(params);
-    
+
     if (!result.success) {
       return {
         content: [{
@@ -37,7 +33,7 @@ export async function handler(params: GetPerspectiveTasksV2Params) {
       };
     }
 
-    // 格式化返回结果
+    // Format response
     const response: any = {
       success: true,
       perspective: result.perspectiveInfo,
@@ -63,7 +59,7 @@ export async function handler(params: GetPerspectiveTasksV2Params) {
       response.taskTree = result.taskTree;
     }
 
-    // 如果有任务，添加汇总信息
+    // Add summary if tasks exist
     if (result.tasks && result.tasks.length > 0) {
       const summary = {
         flaggedTasks: result.tasks.filter(t => t.flagged).length,
@@ -76,7 +72,7 @@ export async function handler(params: GetPerspectiveTasksV2Params) {
         rootTaskCount: result.summary?.rootTaskCount ?? 0,
         nestedTaskCount: result.summary?.nestedTaskCount ?? 0
       };
-      
+
       response.summary = summary;
     }
 
