@@ -1,4 +1,5 @@
 import { executeOmniFocusScript } from '../../utils/scriptExecution.js';
+import { formatTask, groupTasksByProject } from '../../utils/formatTask.js';
 
 export interface GetTodayCompletedTasksOptions {
   limit?: number;
@@ -47,7 +48,7 @@ export async function getTodayCompletedTasks(options: GetTodayCompletedTasksOpti
             }
 
             tasks.forEach((task: any) => {
-              output += formatCompletedTask(task);
+              output += formatTask(task, { showCompletionTime: true });
               output += '\n';
             });
 
@@ -74,68 +75,3 @@ export async function getTodayCompletedTasks(options: GetTodayCompletedTasksOpti
   }
 }
 
-// Group tasks by project
-function groupTasksByProject(tasks: any[]): Map<string, any[]> {
-  const grouped = new Map<string, any[]>();
-
-  tasks.forEach(task => {
-    const projectName = task.projectName || (task.inInbox ? 'Inbox' : 'No Project');
-
-    if (!grouped.has(projectName)) {
-      grouped.set(projectName, []);
-    }
-    grouped.get(projectName)!.push(task);
-  });
-
-  return grouped;
-}
-
-// Format a single completed task
-function formatCompletedTask(task: any): string {
-  let output = '';
-
-  const flagIndicator = task.flagged ? '[flagged] ' : '';
-
-  output += `- ${flagIndicator}${task.name}`;
-
-  // Completion time
-  if (task.completedDate) {
-    const completedTime = new Date(task.completedDate).toLocaleTimeString(undefined, {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-    output += ` *(completed ${completedTime})*`;
-  }
-
-  // Additional info
-  const additionalInfo: string[] = [];
-
-  if (task.estimatedMinutes) {
-    const hours = Math.floor(task.estimatedMinutes / 60);
-    const minutes = task.estimatedMinutes % 60;
-    if (hours > 0) {
-      additionalInfo.push(`${hours}h${minutes > 0 ? `${minutes}m` : ''}`);
-    } else {
-      additionalInfo.push(`${minutes}m`);
-    }
-  }
-
-  if (additionalInfo.length > 0) {
-    output += ` (${additionalInfo.join(', ')})`;
-  }
-
-  output += '\n';
-
-  // Task note
-  if (task.note && task.note.trim()) {
-    output += `  Note: ${task.note.trim()}\n`;
-  }
-
-  // Tags
-  if (task.tags && task.tags.length > 0) {
-    const tagNames = task.tags.map((tag: any) => tag.name).join(', ');
-    output += `  Tags: ${tagNames}\n`;
-  }
-
-  return output;
-}

@@ -1,4 +1,5 @@
 import { executeOmniFocusScript } from '../../utils/scriptExecution.js';
+import { formatTask } from '../../utils/formatTask.js';
 
 export interface GetForecastTasksOptions {
   days?: number;
@@ -65,17 +66,10 @@ export async function getForecastTasks(options: GetForecastTasksOptions = {}): P
             output += `${dateHeader}\n`;
 
             tasks.forEach((task: any) => {
-              const flagIndicator = task.flagged ? '[flagged] ' : '';
-              const projectStr = task.projectName ? ` (${task.projectName})` : ' (Inbox)';
-              const statusStr = task.taskStatus !== 'Available' ? ` [${task.taskStatus}]` : '';
-              const estimateStr = task.estimatedMinutes ? ` ${task.estimatedMinutes}m` : '';
-              const typeIndicator = task.isDue ? 'due' : 'deferred';
-
-              output += `- ${flagIndicator}${task.name}${projectStr}${statusStr}${estimateStr} [${typeIndicator}]\n`;
-
-              if (task.note && task.note.trim()) {
-                output += `  Note: ${task.note.trim()}\n`;
-              }
+              output += formatTask(task, {
+                showProject: true,
+                typeIndicator: task.isDue ? 'due' : 'deferred',
+              });
             });
 
             output += '\n';

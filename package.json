@@ -13,7 +13,7 @@
     "start": "node dist/server.js",
     "dev": "tsc -w",
     "prepublishOnly": "npm run build",
-    "test": "echo \"Test passed - manual testing required with OmniFocus\""
+    "test": "npx tsx --test $(find src -name '*.test.ts')"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.8.0",

@@ -5,6 +5,7 @@ import {
   PerspectiveProjectGroup,
   PerspectiveTaskNode
 } from './perspectiveTaskTree.js';
+import { resolveDisplayStatus, formatEstimate, formatDisplayDate } from '../../utils/formatTask.js';
 
 export interface GetCustomPerspectiveTasksOptions {
   perspectiveName: string;
@@ -190,7 +191,14 @@ function renderTaskNodes(
 }
 
 function formatTaskTitle(task: PerspectiveTaskNode): string {
-  const status = task.completed || task.dropped ? '[done]' : (task.flagged ? '[flagged]' : '-');
+  let status: string;
+  if (task.completed || task.dropped) {
+    status = '[done]';
+  } else if (task.flagged) {
+    status = '[flagged]';
+  } else {
+    status = '-';
+  }
   const tags = task.displayTags.length > 0 ? ` ${task.displayTags.join(' ')}` : '';
   return `${status} **${task.name}**${tags}`;
 }
@@ -202,26 +210,30 @@ function formatTaskDetails(task: PerspectiveTaskNode, includeProject: boolean): 
     details.push(`Project: ${task.projectName}`);
   }
 
+  // Show resolved status (Blocked → Deferred when appropriate)
+  if (!task.completed && !task.dropped) {
+    const status = resolveDisplayStatus('Blocked', task.deferDate);
+    // Only show if the task actually has a non-trivial status to display
+    // (the raw status isn't available on PerspectiveTaskNode, so we check defer)
+    if (task.deferDate && status === 'Deferred') {
+      details.push(`Status: Deferred`);
+    }
+  }
+
   if (task.dueDate) {
-    details.push(`Due: ${formatDate(task.dueDate)}`);
+    details.push(`Due: ${formatDisplayDate(task.dueDate)}`);
   }
 
   if (task.deferDate) {
-    details.push(`Defer: ${formatDate(task.deferDate)}`);
+    details.push(`Defer: ${formatDisplayDate(task.deferDate)}`);
   }
 
   if (task.plannedDate) {
-    details.push(`Planned: ${formatDate(task.plannedDate)}`);
+    details.push(`Planned: ${formatDisplayDate(task.plannedDate)}`);
   }
 
   if (typeof task.estimatedMinutes === 'number') {
-    const hours = Math.floor(task.estimatedMinutes / 60);
-    const minutes = task.estimatedMinutes % 60;
-    if (hours > 0) {
-      details.push(`Estimate: ${hours}h${minutes > 0 ? ` ${minutes}m` : ''}`);
-    } else {
-      details.push(`Estimate: ${minutes}m`);
-    }
+    details.push(`Estimate: ${formatEstimate(task.estimatedMinutes)}`);
   }
 
   const note = task.note.trim();
@@ -233,12 +245,4 @@ function formatTaskDetails(task: PerspectiveTaskNode, includeProject: boolean): 
   }
 
   return details;
-}
-
-function formatDate(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-  return date.toLocaleDateString();
 }

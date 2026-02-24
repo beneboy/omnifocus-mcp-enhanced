@@ -1,4 +1,5 @@
 import { executeOmniFocusScript } from '../../utils/scriptExecution.js';
+import { formatTask } from '../../utils/formatTask.js';
 
 export interface GetInboxTasksOptions {
   hideCompleted?: boolean;
@@ -35,16 +36,7 @@ export async function getInboxTasks(options: GetInboxTasksOptions = {}): Promise
           output += `Found ${data.tasks.length} task${data.tasks.length === 1 ? '' : 's'} in inbox:\n\n`;
 
           data.tasks.forEach((task: any, index: number) => {
-            const flagIndicator = task.flagged ? '[flagged] ' : '';
-            const dueDateStr = task.dueDate ? ` [DUE: ${new Date(task.dueDate).toLocaleDateString()}]` : '';
-            const plannedDateStr = task.plannedDate ? ` [PLAN: ${new Date(task.plannedDate).toLocaleDateString()}]` : '';
-            const statusStr = task.taskStatus !== 'Available' ? ` (${task.taskStatus})` : '';
-
-            output += `${index + 1}. ${flagIndicator}${task.name}${dueDateStr}${plannedDateStr}${statusStr}\n`;
-
-            if (task.note && task.note.trim()) {
-              output += `   Note: ${task.note.trim()}\n`;
-            }
+            output += formatTask(task, { bullet: `${index + 1}. ` });
           });
         }
       } else {

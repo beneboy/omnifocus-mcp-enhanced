@@ -1,4 +1,5 @@
 import { executeOmniFocusScript } from '../../utils/scriptExecution.js';
+import { formatTask } from '../../utils/formatTask.js';
 
 export interface GetFlaggedTasksOptions {
   hideCompleted?: boolean;
@@ -60,24 +61,8 @@ export async function getFlaggedTasks(options: GetFlaggedTasksOptions = {}): Pro
               output += `## ${projectName}\n`;
             }
 
-            tasks.forEach((task: any, index: number) => {
-              const dueDateStr = task.dueDate ? ` [DUE: ${new Date(task.dueDate).toLocaleDateString()}]` : '';
-              const deferDateStr = task.deferDate ? ` [DEFER: ${new Date(task.deferDate).toLocaleDateString()}]` : '';
-              const plannedDateStr = task.plannedDate ? ` [PLAN: ${new Date(task.plannedDate).toLocaleDateString()}]` : '';
-              const statusStr = task.taskStatus !== 'Available' ? ` (${task.taskStatus})` : '';
-              const estimateStr = task.estimatedMinutes ? ` ${task.estimatedMinutes}m` : '';
-
-              output += `- [flagged] ${task.name}${dueDateStr}${deferDateStr}${plannedDateStr}${statusStr}${estimateStr}\n`;
-
-              if (task.note && task.note.trim()) {
-                output += `  Note: ${task.note.trim()}\n`;
-              }
-
-              if (task.tags && task.tags.length > 0) {
-                const tagNames = task.tags.map((tag: any) => tag.name).join(', ');
-                output += `  Tags: ${tagNames}\n`;
-              }
-
+            tasks.forEach((task: any) => {
+              output += formatTask(task);
               output += '\n';
             });
           });

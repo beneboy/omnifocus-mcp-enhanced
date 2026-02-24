@@ -1,4 +1,5 @@
 import { executeOmniFocusScript } from '../../utils/scriptExecution.js';
+import { formatTask } from '../../utils/formatTask.js';
 
 export interface GetTasksByTagOptions {
   tagName: string;
@@ -73,30 +74,9 @@ export async function getTasksByTag(options: GetTasksByTagOptions): Promise<stri
             }
 
             tasks.forEach((task: any) => {
-              const flagIndicator = task.flagged ? '[flagged] ' : '';
-              const dueDateStr = task.dueDate ? ` [DUE: ${new Date(task.dueDate).toLocaleDateString()}]` : '';
-              const deferDateStr = task.deferDate ? ` [DEFER: ${new Date(task.deferDate).toLocaleDateString()}]` : '';
-              const plannedDateStr = task.plannedDate ? ` [PLAN: ${new Date(task.plannedDate).toLocaleDateString()}]` : '';
-              const statusStr = task.taskStatus !== 'Available' ? ` (${task.taskStatus})` : '';
-              const estimateStr = task.estimatedMinutes ? ` ${task.estimatedMinutes}m` : '';
-
-              output += `- ${flagIndicator}${task.name}${dueDateStr}${deferDateStr}${plannedDateStr}${statusStr}${estimateStr}\n`;
-
-              if (task.note && task.note.trim()) {
-                output += `  Note: ${task.note.trim()}\n`;
-              }
-
-              // Show all tags for this task
-              if (task.tags && task.tags.length > 0) {
-                const tagNames = task.tags.map((tag: any) => {
-                  // Highlight the matched tag
-                  return data.matchedTags && data.matchedTags.includes(tag.name)
-                    ? `**${tag.name}**`
-                    : tag.name;
-                }).join(', ');
-                output += `  Tags: ${tagNames}\n`;
-              }
-
+              output += formatTask(task, {
+                highlightTags: data.matchedTags,
+              });
               output += '\n';
             });
           });

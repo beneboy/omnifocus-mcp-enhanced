@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { dumpDatabase } from '../dumpDatabase.js';
 import { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
+import { formatTask, formatDisplayDate } from '../../utils/formatTask.js';
 
 export const schema = z.object({
   hideCompleted: z.boolean().optional().describe("Set to false to show completed and dropped tasks (default: true)"),
@@ -35,13 +36,7 @@ export async function handler(args: z.infer<typeof schema>, extra: RequestHandle
   }
 }
 
-// Function to format date in compact format (M/D)
-function formatCompactDate(isoDate: string | null): string {
-  if (!isoDate) return '';
-  
-  const date = new Date(isoDate);
-  return `${date.getMonth() + 1}/${date.getDate()}`;
-}
+// Compact date formatting delegated to shared formatDisplayDate(date, true)
 
 // Function to format the database in the compact report format
 export function formatCompactReport(database: any, options: { hideCompleted: boolean, hideRecurringDuplicates: boolean }): string {
@@ -57,7 +52,7 @@ export function formatCompactReport(database: any, options: { hideCompleted: boo
   output += `FORMAT LEGEND:
 F: Folder | P: Project | •: Task | [flagged]: Flagged
 Dates: [M/D] | [DUE:M/D] [PLAN:M/D] [defer:M/D] | Duration: (30m) or (2h) | Tags: <tag1,tag2>
-Status: #next #avail #block #due #over #compl #drop\n\n`;
+Status: #next #avail #block #defer #due #over #compl #drop\n\n`;
   
   // Map of folder IDs to folder objects for quick lookup
   const folderMap = new Map();
@@ -132,14 +127,12 @@ Status: #next #avail #block #due #over #compl #drop\n\n`;
     
     // Add due date if present
     if (project.dueDate) {
-      const dueDateStr = formatCompactDate(project.dueDate);
-      statusInfo += statusInfo ? ` [DUE:${dueDateStr}]` : ` [DUE:${dueDateStr}]`;
+      statusInfo += ` [DUE:${formatDisplayDate(project.dueDate, true)}]`;
     }
 
     // Add planned date if present
     if (project.plannedDate) {
-      const plannedDateStr = formatCompactDate(project.plannedDate);
-      statusInfo += statusInfo ? ` [PLAN:${plannedDateStr}]` : ` [PLAN:${plannedDateStr}]`;
+      statusInfo += ` [PLAN:${formatDisplayDate(project.plannedDate, true)}]`;
     }
     
     // Add flag if present
@@ -164,85 +157,29 @@ Status: #next #avail #block #due #over #compl #drop\n\n`;
   // Process a task
   function processTask(task: any, level: number): string {
     const indent = '   '.repeat(level);
-    
+
     // Skip if it's completed or dropped and we're hiding completed items
     if (hideCompleted && (task.completed || task.taskStatus === 'Completed' || task.taskStatus === 'Dropped')) {
       return '';
     }
-    
-    // Flag symbol
-    const flagSymbol = task.flagged ? '[flagged] ' : '';
-    
-    // Format dates
-    let dateInfo = '';
-    if (task.dueDate) {
-      const dueDateStr = formatCompactDate(task.dueDate);
-      dateInfo += ` [DUE:${dueDateStr}]`;
-    }
-    if (task.deferDate) {
-      const deferDateStr = formatCompactDate(task.deferDate);
-      dateInfo += ` [defer:${deferDateStr}]`;
-    }
-    if (task.plannedDate) {
-      const plannedDateStr = formatCompactDate(task.plannedDate);
-      dateInfo += ` [PLAN:${plannedDateStr}]`;
-    }
-    
-    // Format duration
-    let durationStr = '';
-    if (task.estimatedMinutes) {
-      // Convert to hours if >= 60 minutes
-      if (task.estimatedMinutes >= 60) {
-        const hours = Math.floor(task.estimatedMinutes / 60);
-        durationStr = ` (${hours}h)`;
-      } else {
-        durationStr = ` (${task.estimatedMinutes}m)`;
-      }
-    }
-    
-    // Format tags
-    let tagsStr = '';
-    if (task.tagNames && task.tagNames.length > 0) {
-      tagsStr = ` <${task.tagNames.join(',')}>`;
-    }
-    
-    // Format status
-    let statusStr = '';
-    switch (task.taskStatus) {
-      case 'Next':
-        statusStr = ' #next';
-        break;
-      case 'Available':
-        statusStr = ' #avail';
-        break;
-      case 'Blocked':
-        statusStr = ' #block';
-        break;
-      case 'DueSoon':
-        statusStr = ' #due';
-        break;
-      case 'Overdue':
-        statusStr = ' #over';
-        break;
-      case 'Completed':
-        statusStr = ' #compl';
-        break;
-      case 'Dropped':
-        statusStr = ' #drop';
-        break;
-    }
-    
-    let taskOutput = `${indent}• ${flagSymbol}${task.name}${dateInfo}${durationStr}${tagsStr}${statusStr}\n`;
-    
+
+    // Map tagNames array to tag objects for formatTask
+    const tags = (task.tagNames || []).map((name: string) => ({ name }));
+
+    let taskOutput = indent + formatTask(
+      { ...task, tags },
+      { compact: true, bullet: '• ' }
+    );
+
     // Process subtasks
     if (task.childIds && task.childIds.length > 0) {
       const childTasks = database.tasks.filter((t: any) => task.childIds.includes(t.id));
-      
+
       for (const childTask of childTasks) {
         taskOutput += processTask(childTask, level + 1);
       }
     }
-    
+
     return taskOutput;
   }
   
