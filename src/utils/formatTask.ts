@@ -94,14 +94,20 @@ export function formatEstimate(minutes: number): string {
 
 /**
  * Format an ISO date string for display.
- * compact=true  → "M/D"         (e.g. "2/24")
- * compact=false → toLocaleDateString()  (e.g. "2/24/2026")
+ * compact=true  → "M/D"           (e.g. "2/24")
+ * compact=false → "YYYY-MM-DD"    (e.g. "2026-02-24")
+ *
+ * Standard mode uses ISO format for unambiguous LLM consumption
+ * (no locale dependency, matches the ISO input format used in tool schemas).
  */
 export function formatDisplayDate(isoDate: string, compact?: boolean): string {
   const date = new Date(isoDate);
   if (isNaN(date.getTime())) return isoDate;
   if (compact) return `${date.getMonth() + 1}/${date.getDate()}`;
-  return date.toLocaleDateString();
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 // === Main formatting function ===
@@ -110,12 +116,12 @@ export function formatDisplayDate(isoDate: string, compact?: boolean): string {
  * Format a task as a text string for tool output.
  *
  * Standard mode (default):
- *   - [flagged] Task Name [DUE: 2/24/2026, DEFER: 3/1/2026] (Deferred, 1h30m)
+ *   - [flagged] Task Name [DUE: 2026-03-01, DEFER: 2026-02-25] (Deferred) (est:1h30m)
  *     Note: some note
- *     Tags: tag1, tag2
+ *     Tags: "Deep Work", "Admin"
  *
  * Compact mode (dumpDatabase):
- *   • [flagged] Task Name [DUE:2/24] [defer:3/1] [PLAN:3/5] (1h30m) <tag1,tag2> #defer
+ *   • [flagged] Task Name [DUE:3/1] [defer:2/25] [PLAN:3/5] (1h30m) <"Deep Work","Admin"> #defer
  */
 export function formatTask(task: TaskData, options: FormatTaskOptions = {}): string {
   const {
@@ -203,16 +209,12 @@ function formatTaskStandard(
     output += ` [${dateInfo.join(', ')}]`;
   }
 
-  // Status + estimate in parens
-  const extra: string[] = [];
+  // Status and estimate as separate parentheticals for unambiguous parsing
   if (opts.displayStatus && opts.displayStatus !== 'Available') {
-    extra.push(opts.displayStatus);
+    output += ` (${opts.displayStatus})`;
   }
   if (task.estimatedMinutes) {
-    extra.push(formatEstimate(task.estimatedMinutes));
-  }
-  if (extra.length > 0) {
-    output += ` (${extra.join(', ')})`;
+    output += ` (est:${formatEstimate(task.estimatedMinutes)})`;
   }
 
   // Type indicator (forecast view)
@@ -231,9 +233,9 @@ function formatTaskStandard(
     const tagNames = task.tags.map(tag => {
       const name = normalizeTagName(tag);
       if (opts.highlightTags && opts.highlightTags.includes(name)) {
-        return `**${name}**`;
+        return `**"${name}"**`;
       }
-      return name;
+      return `"${name}"`;
     });
     output += `  Tags: ${tagNames.join(', ')}\n`;
   }
@@ -266,9 +268,9 @@ function formatTaskCompact(task: TaskData, bullet: string, displayStatus: string
     output += ` (${formatEstimate(task.estimatedMinutes)})`;
   }
 
-  // Tags inline
+  // Tags inline (quoted to avoid ambiguity with multi-word tag names)
   if (task.tags && task.tags.length > 0) {
-    const tagNames = task.tags.map(normalizeTagName);
+    const tagNames = task.tags.map(t => `"${normalizeTagName(t)}"`);
     output += ` <${tagNames.join(',')}>`;
   }
 

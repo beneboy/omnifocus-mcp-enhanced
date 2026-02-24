@@ -51,7 +51,7 @@ export function formatCompactReport(database: any, options: { hideCompleted: boo
   // Add legend
   output += `FORMAT LEGEND:
 F: Folder | P: Project | •: Task | [flagged]: Flagged
-Dates: [M/D] | [DUE:M/D] [PLAN:M/D] [defer:M/D] | Duration: (30m) or (2h) | Tags: <tag1,tag2>
+Dates: [M/D] | [DUE:M/D] [PLAN:M/D] [defer:M/D] | Duration: (30m) or (2h) | Tags: <"tag1","tag2">
 Status: #next #avail #block #defer #due #over #compl #drop\n\n`;
   
   // Map of folder IDs to folder objects for quick lookup

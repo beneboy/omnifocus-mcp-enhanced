@@ -67,11 +67,10 @@ test('formatDisplayDate: compact mode returns M/D', () => {
   assert.equal(result, '6/15');
 });
 
-test('formatDisplayDate: full mode returns locale string', () => {
-  const d = new Date(2026, 5, 15, 12, 0, 0);
+test('formatDisplayDate: full mode returns YYYY-MM-DD', () => {
+  const d = new Date(2026, 5, 15, 12, 0, 0); // June 15 local
   const result = formatDisplayDate(d.toISOString(), false);
-  // Should contain the year at minimum
-  assert.match(result, /2026/);
+  assert.equal(result, '2026-06-15');
 });
 
 test('formatDisplayDate: invalid date returns input', () => {
@@ -90,17 +89,20 @@ test('formatTask: flagged task', () => {
   assert.equal(result, '- [flagged] Buy milk\n');
 });
 
-test('formatTask: all date fields', () => {
+test('formatTask: all date fields with ISO format', () => {
+  const due = new Date(2099, 5, 15, 12, 0, 0);
+  const defer = new Date(2099, 5, 10, 12, 0, 0);
+  const planned = new Date(2099, 5, 12, 12, 0, 0);
   const task: TaskData = {
     name: 'Task',
-    dueDate: '2099-06-15T12:00:00.000Z',
-    deferDate: '2099-06-10T12:00:00.000Z',
-    plannedDate: '2099-06-12T12:00:00.000Z',
+    dueDate: due.toISOString(),
+    deferDate: defer.toISOString(),
+    plannedDate: planned.toISOString(),
   };
   const result = formatTask(task);
-  assert.match(result, /DUE:/);
-  assert.match(result, /DEFER:/);
-  assert.match(result, /PLAN:/);
+  assert.match(result, /DUE: 2099-06-15/);
+  assert.match(result, /DEFER: 2099-06-10/);
+  assert.match(result, /PLAN: 2099-06-12/);
   // All in one bracket
   assert.match(result, /\[DUE:.*,\s*DEFER:.*,\s*PLAN:/);
 });
@@ -115,14 +117,15 @@ test('formatTask: overdue detection', () => {
   assert.doesNotMatch(result, /\bDUE:/);
 });
 
-test('formatTask: status and estimate in parens', () => {
+test('formatTask: status and estimate in separate parens', () => {
   const task: TaskData = {
     name: 'Task',
     taskStatus: 'Next',
     estimatedMinutes: 90,
   };
   const result = formatTask(task);
-  assert.match(result, /\(Next, 1h30m\)/);
+  assert.match(result, /\(Next\)/);
+  assert.match(result, /\(est:1h30m\)/);
 });
 
 test('formatTask: Available status hidden', () => {
@@ -133,7 +136,7 @@ test('formatTask: Available status hidden', () => {
   };
   const result = formatTask(task);
   // Should show estimate but not status
-  assert.match(result, /\(30m\)/);
+  assert.match(result, /\(est:30m\)/);
   assert.doesNotMatch(result, /Available/);
 });
 
@@ -156,7 +159,7 @@ test('formatTask: note and tags', () => {
   };
   const result = formatTask(task);
   assert.match(result, /\n  Note: Remember this\n/);
-  assert.match(result, /\n  Tags: errands, shopping\n/);
+  assert.match(result, /\n  Tags: "errands", "shopping"\n/);
 });
 
 test('formatTask: string tags handled', () => {
@@ -165,7 +168,16 @@ test('formatTask: string tags handled', () => {
     tags: ['errands', 'shopping'],
   };
   const result = formatTask(task);
-  assert.match(result, /Tags: errands, shopping/);
+  assert.match(result, /Tags: "errands", "shopping"/);
+});
+
+test('formatTask: multi-word tags are unambiguous when quoted', () => {
+  const task: TaskData = {
+    name: 'Task',
+    tags: [{ name: 'Deep Work' }, { name: 'Work' }],
+  };
+  const result = formatTask(task);
+  assert.match(result, /Tags: "Deep Work", "Work"/);
 });
 
 test('formatTask: showNote=false suppresses note', () => {
@@ -220,8 +232,9 @@ test('formatTask: highlightTags bolds matched tags', () => {
     tags: [{ name: 'errands' }, { name: 'shopping' }],
   };
   const result = formatTask(task, { highlightTags: ['errands'] });
-  assert.match(result, /\*\*errands\*\*/);
-  assert.doesNotMatch(result, /\*\*shopping\*\*/);
+  assert.match(result, /\*\*"errands"\*\*/);
+  assert.match(result, /"shopping"/);
+  assert.doesNotMatch(result, /\*\*"shopping"\*\*/);
 });
 
 test('formatTask: completedDate shown as DONE when not showCompletionTime', () => {
@@ -258,7 +271,7 @@ test('formatTask compact: basic format', () => {
   assert.match(result, /\[defer:2\/25\]/);
   assert.match(result, /\[PLAN:2\/28\]/);
   assert.match(result, /\(1h30m\)/);
-  assert.match(result, /<errands,shopping>/);
+  assert.match(result, /<"errands","shopping">/);
   assert.match(result, /#defer/);
   // Should NOT have detail lines
   assert.doesNotMatch(result, /Note:/);
